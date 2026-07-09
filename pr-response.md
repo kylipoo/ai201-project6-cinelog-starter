@@ -7,16 +7,24 @@
 ## Comment 1 — Rename
 
 **What I did:**
+I went to search, looked up any mention of "Save_to_watchlist()" and replaced with "Add_to_watchlist()"
+
 **How I verified:**
-
-- I went to search, looked up any mention of "Save_to_watchlist()" and replaced with "Add_to_watchlist()"
-
--Save_to_watchlist() is referenced by the add_film route call in watchlist.py, and is first defined in watchlist_service.py(), so I would just need to go to those two files to change. This particular PR is about maintaining a consistent function name so as long as I don't find any references to Save_to_watchlist(), I have fulfilled this PR comment.
+Save_to_watchlist() is referenced by the add_film route call in watchlist.py, and is first defined in watchlist_service.py(), so I would just need to go to those two files to change. This particular PR is about maintaining a consistent function name so as long as I don't find any references to Save_to_watchlist(), I have fulfilled this PR comment.
 
 ## Comment 2 — Deduplication
 
 **What I did:**
+Ported the deduplication pattern from `add_to_collection()`. Added an
+`AlreadyInWatchlistError` exception class and, in `add_to_watchlist()`, a
+check that queries for an existing `(user_id, film_id)` WatchlistEntry after
+the film-exists check and raises if one is found — preventing duplicate rows.
+
 **How I verified:**
+Wrote `tests/test_watchlist.py::test_add_to_watchlist_duplicate_raises`, which
+adds the same film twice and asserts (a) the second call raises
+`AlreadyInWatchlistError` via `pytest.raises`, and (b) only one entry exists
+(`count == 1`), so no duplicate is silently created. `pytest tests/` → all pass.
 
 ## Comment 3 — Missing test
 
