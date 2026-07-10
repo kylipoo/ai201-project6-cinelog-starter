@@ -105,9 +105,40 @@ would make it consistent with the collection.
 
 ## Comment 6 — Rebase
 
+I ran `git fetch origin` and `git rebase origin/main` to replay my 10
+watchlist commits on top of main's history (which includes the
+`refactor: migrate film IDs from integer to UUID` commit).
+
 **What conflicted:**
+1. **`.gitignore`** — an add/add conflict: both main and my first commit
+   independently added a `.gitignore`. The only real difference was that
+   main's version listed `.pytest_cache/`.
+2. **`models.py`** — the substantive one. My new `WatchlistEntry` class landed
+   in a file main had rewritten so that `Film.id` is now a UUID
+   (`db.String(36)`) instead of an integer. My `WatchlistEntry.film_id` was
+   still `db.Integer`, so it would have been an integer foreign key pointing at
+   a UUID primary key — broken.
+
 **How I resolved it:**
+- `.gitignore`: took the **union** of both sides (kept `.pytest_cache/`,
+  `.venv/`, and `venv/`) — no information lost.
+- `models.py`: kept the `WatchlistEntry` class but changed
+  `film_id = db.Column(db.Integer, ...)` → `db.Column(db.String(36), ...)` so
+  the foreign key matches main's UUID `Film.id`.
+- Git can't catch value-level assumptions, so I also swept the watchlist code
+  for lingering integer IDs: the nonexistent-film test now uses a UUID string
+  (`"00000000-0000-0000-0000-000000000000"`) instead of `999999`, and the
+  `add_to_watchlist()` docstring documents `film_id` as a UUID `str` rather
+  than `int`.
+
 **How I verified no conflict remains:**
+- `pytest tests/` → all 7 pass.
+- `grep` for `db.Integer` on `film_id` / `999999` / `film_id (int)` across
+  `models.py`, `services/`, and `tests/` returns nothing.
+- `git log --merges origin/main..HEAD` is **empty** — the history is linear,
+  with no merge commits (a rebase, not a merge).
+- The branch's merge-base with `origin/main` is main's current tip, confirming
+  the branch is rebased directly on top of main.
 
 ## PR Description
 
