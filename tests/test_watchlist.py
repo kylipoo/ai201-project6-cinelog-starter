@@ -12,6 +12,7 @@ from services.watchlist_service import (
     get_watchlist,
     AlreadyInWatchlistError,
 )
+from services.collection_service import FilmNotFoundError
 
 
 @pytest.fixture
@@ -83,3 +84,12 @@ def test_add_to_watchlist_duplicate_raises(app, sample_user, sample_film):
             user_id=sample_user, film_id=sample_film
         ).count()
         assert count == 1
+
+
+# ── Nonexistent film ─────────────────────────────────────────────────────────
+
+def test_add_to_watchlist_nonexistent_film_raises(app, sample_user):
+    """Adding a film_id that doesn't exist should raise FilmNotFoundError."""
+    with app.app_context():
+        with pytest.raises(FilmNotFoundError):
+            add_to_watchlist(user_id=sample_user, film_id=999999)
