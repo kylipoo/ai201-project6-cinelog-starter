@@ -76,8 +76,32 @@ scoped the migration to a single per-user flag as follow-up work.
 ## Comment 5 — Sort order
 
 **My position:**
+I agree with the reviewer. The watchlist should default to sorting by most
+recent date added (newest first), rather than the current alphabetical
+`Film.title` order.
+
 **Reasoning:**
+A user might accidentally add the wrong film, so surfacing the most recently
+added entries at the top lets them spot and fix mistakes quickly and
+conveniently. More generally, recency is the more useful default signal for a
+"want to watch" list — the thing you just added is usually the thing you care
+about right now — whereas alphabetical order buries recent activity.
+
 **Engagement with reviewer's point:**
+The maintainer's read — that most users want to see what they added recently —
+matches how I'd expect a "want to watch" list to be used: it's an active queue,
+not an archive, so the newest entry is usually the reason you opened it. I'd
+treat that as a safe assumption, though it's the kind of thing worth confirming
+with usage data if we ever have it. The reviewer's suggestion also lines up with
+an inconsistency worth noting: the
+collection service already sorts newest-first
+(`CollectionEntry.date_added.desc()` in `services/collection_service.py`),
+while the watchlist currently sorts by title, so the two lists behave
+differently for no strong reason. Admittedly, there is a trade off to weigh between either sorting by date added or alphabetical order. Alphabetical order does have one merit — it's
+easier to scan for a specific known title in a long list (especially when many of the entries might be sequels, only distinguished by what comes after the name)— but that's better
+served by a search/filter feature than by the default sort, and the recency
+signal is more valuable day-to-day. Defaulting the watchlist to newest-first
+would make it consistent with the collection.
 
 ## Comment 6 — Rebase
 
