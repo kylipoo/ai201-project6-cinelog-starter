@@ -51,16 +51,12 @@ design decision — the reviewer is right to flag it, and I've corrected it in
 opts in to sharing.
 
 **Reasoning:**
-A watchlist is a record of what a user intends to watch — it's closer to a
-private viewing history (like YouTube or Reddit history) than to a published,
-social artifact. Only the user themself has a reason to see it by default.
-Exposing it publicly could reveal personal interests a user may not want to
-share, so the safe and respectful default is to keep it private and make
-sharing an explicit, opt-in action.
+
+"CineLog is a personal film-logging app — the watchlist is one person's private queue of what they mean to watch next, reflecting their taste, mood. However, CineLog should be designed to also accommodate for sensitive interests (guilty pleasures, difficult subject matter). Its users are individuals cataloging their own viewing, not curators publishing public recommendations. As such, I actually believe that the default that serves them is a private queue, with sharing as a deliberate act."
 
 **Tradeoff acknowledged:**
 Defaulting to private means watchlists aren't socially discoverable out of the
-box and it may be difficult for users of cinelog to be able to connect with each other — a user who _wants_ to share their list has to explicitly set it public.
+box and it may be difficult for users of cinelog to be able to connect with each other: A user who _wants_ to share their list has to explicitly set it public (in which case we'll need to rework our UI to give a hint to the user if they want to connect with others how they can share their watchlist).
 I think that's the correct tradeoff: privacy-by-default with opt-in sharing is
 safer than public-by-default with opt-out, and the discoverability cost can be
 revisited if/when a deliberate sharing feature is prioritized.
