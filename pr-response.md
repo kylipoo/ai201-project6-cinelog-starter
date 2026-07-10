@@ -44,8 +44,34 @@ commit rather than bundled into the Fix 2 (deduplication) commit.
 ## Comment 4 — Default visibility
 
 **My position:**
+Watchlist entries should default to **private** (`public=False`). The previous
+`default=True` was an unintentional inherited default rather than a deliberate
+design decision — the reviewer is right to flag it, and I've corrected it in
+[models.py](models.py) so new entries are private unless the user explicitly
+opts in to sharing.
+
 **Reasoning:**
+
+"CineLog is a personal film-logging app — the watchlist is one person's private queue of what they mean to watch next, reflecting their taste, mood. However, CineLog should be designed to also accommodate for sensitive interests (guilty pleasures, difficult subject matter). Its users are individuals cataloging their own viewing, not curators publishing public recommendations. As such, I actually believe that the default that serves them is a private queue, with sharing as a deliberate act."
+
 **Tradeoff acknowledged:**
+Defaulting to private means watchlists aren't socially discoverable out of the
+box and it may be difficult for users of cinelog to be able to connect with each other: A user who _wants_ to share their list has to explicitly set it public (in which case we'll need to rework our UI to give a hint to the user if they want to connect with others how they can share their watchlist).
+I think that's the correct tradeoff: privacy-by-default with opt-in sharing is
+safer than public-by-default with opt-out, and the discoverability cost can be
+revisited if/when a deliberate sharing feature is prioritized.
+
+**Follow-up work (out of scope for this PR):**
+Now that a watchlist can be private or public, we'll need a way to toggle that
+visibility. Since a watchlist is retrieved per user (`get_watchlist(user_id)`),
+visibility is a per-user setting — one flag, not one per film — so it belongs
+on the `User` model (e.g. `User.watchlist_public`) rather than on each
+`WatchlistEntry`. The toggle would fetch the user by `user_id`, set the flag to
+the requested value, and commit. Setting it to the value it's already at is a
+harmless no-op, so — unlike the add-to-watchlist path, which guards against
+duplicate _rows_ — it doesn't need to raise an error. I've kept the current
+per-entry `public` field (defaulted to private) as the interim mechanism and
+scoped the migration to a single per-user flag as follow-up work.
 
 ## Comment 5 — Sort order
 
