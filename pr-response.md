@@ -29,7 +29,17 @@ adds the same film twice and asserts (a) the second call raises
 ## Comment 3 — Missing test
 
 **What I did:**
+Added `tests/test_watchlist.py::test_add_to_watchlist_nonexistent_film_raises`,
+modeled after `test_add_to_collection_nonexistent_film_raises` in
+`tests/test_collection.py`. The test calls `add_to_watchlist()` with a
+`film_id` that isn't in the database (`999999`) and asserts, via
+`pytest.raises`, that it raises `FilmNotFoundError` — confirming the service
+validates the film exists before creating a `WatchlistEntry`, rather than
+failing with a database integrity error. It was landed as its own `test:`
+commit rather than bundled into the Fix 2 (deduplication) commit.
+
 **How I verified:**
+`pytest tests/test_watchlist.py` → all pass.
 
 ## Comment 4 — Default visibility
 
