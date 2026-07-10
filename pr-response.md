@@ -100,7 +100,7 @@ while the watchlist currently sorts by title, so the two lists behave
 differently for no strong reason. Admittedly, there is a trade off to weigh between either sorting by date added or alphabetical order. Alphabetical order does have one merit — it's
 easier to scan for a specific known title in a long list (especially when many of the entries might be sequels, only distinguished by what comes after the name)— but that's better
 served by a search/filter feature than by the default sort, and the recency
-signal is more valuable day-to-day. Defaulting the watchlist to newest-first
+signal is more valuable day-to-day. Defaulting the watchlist to a newest-first design
 would make it consistent with the collection.
 
 ## Comment 6 — Rebase
