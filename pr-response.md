@@ -2,7 +2,25 @@
 
 ## AI Usage
 
-<!-- Fill in at the end — how you used AI tools during this project -->
+I used an AI coding assistant (Claude Code) during this project. Specific uses:
+
+- **Git rebase onto `main` (Comment 6).** When `main`'s integer→UUID `Film.id`
+  migration conflicted with my watchlist code, I used the assistant to walk
+  through the rebase, resolve the `.gitignore` and `models.py` conflicts, and
+  find the remaining integer-ID references (the `999999` test value and a
+  docstring) that git couldn't flag on its own.
+- **Test scaffolding (Comment 3).** I had it draft the
+  `test_add_to_watchlist_nonexistent_film_raises` test modeled on the existing
+  collection test, then reviewed it and put it in its own `test:` commit.
+- **Drafting/refining the reasoning write-ups (Comments 4 & 5).** I described
+  the positions I wanted to take (private-by-default, newest-first sort) and
+  used the assistant to help draft and tighten the wording; the design
+  decisions and final wording are my own.
+- **History cleanup.** I used it to help reword and squash commits (e.g.
+  folding the Comment 4 reasoning into the visibility-default commit).
+
+All design decisions, final wording, and verification were reviewed and
+approved by me.
 
 ## Comment 1 — Rename
 
@@ -32,7 +50,7 @@ adds the same film twice and asserts (a) the second call raises
 Added `tests/test_watchlist.py::test_add_to_watchlist_nonexistent_film_raises`,
 modeled after `test_add_to_collection_nonexistent_film_raises` in
 `tests/test_collection.py`. The test calls `add_to_watchlist()` with a
-`film_id` that isn't in the database (`999999`) and asserts, via
+`film_id` that isn't in the database (a well-formed but nonexistent UUID) and asserts, via
 `pytest.raises`, that it raises `FilmNotFoundError` — confirming the service
 validates the film exists before creating a `WatchlistEntry`, rather than
 failing with a database integrity error. It was landed as its own `test:`
@@ -142,4 +160,80 @@ watchlist commits on top of main's history (which includes the
 
 ## PR Description
 
-<!-- Written at the end — feature overview, design decisions, manual testing steps -->
+### What this adds
+
+This PR adds a **watchlist** to CineLog — a per-user list of films a user wants
+to watch later. It's separate from the existing collection (films already
+watched); the watchlist is the "save for later" queue. In plain terms: you POST
+a film under a user, and you can GET that user's saved films back.
+
+It introduces:
+
+- **`WatchlistEntry` model** (`models.py`) — links a user to a film, with a
+  `date_added` timestamp and a `public` visibility flag. `film_id` is a UUID
+  string (matching main's UUID `Film.id`).
+- **Two endpoints** (blueprint mounted at `/watchlist`):
+  - `GET /watchlist/<user_id>` — returns the user's watchlist as a JSON array.
+  - `POST /watchlist/<user_id>/add` with body `{"film_id": "<uuid>"}` — adds a
+    film and returns the created entry with `201`.
+- **Service logic** (`services/watchlist_service.py`) — validates the film
+  exists (raises `FilmNotFoundError`) and blocks duplicates (raises
+  `AlreadyInWatchlistError`), mirroring the collection service's patterns.
+
+### Design decisions
+
+- **Default visibility → private (`public=False`).** A watchlist reflects a
+  user's personal taste, so entries are private by default and sharing is an
+  explicit opt-in. (See Comment 4.)
+- **Sort order → currently alphabetical; decided to move to newest-first.**
+  `get_watchlist()` currently orders by `Film.title` (alphabetical). We've
+  decided newest-first (`date_added` descending) is the better default because
+  a watchlist is an active queue where the most recent add is usually what the
+  user cares about — but that change is **not implemented in this PR**. (See
+  Comment 5.)
+
+### Manual testing steps
+
+There are no endpoints to create users or films, so seed one of each first.
+
+1. **Install & run:**
+   ```
+   python -m venv venv && source venv/bin/activate
+   pip install -r requirements.txt
+   python app.py            # serves on http://127.0.0.1:5000
+   ```
+2. **Seed a user and a film**, noting the printed UUIDs (in a second shell):
+   ```
+   python -c "
+   from app import create_app, db
+   from models import User, Film
+   with create_app().app_context():
+       u = User(username='tester', email='t@example.com')
+       f = Film(title='Paddington 2', year=2017, genre='Comedy')
+       db.session.add_all([u, f]); db.session.commit()
+       print('USER', u.id); print('FILM', f.id)
+   "
+   ```
+3. **Add the film** (substitute the printed IDs):
+   ```
+   curl -X POST http://127.0.0.1:5000/watchlist/<USER_ID>/add \
+        -H 'Content-Type: application/json' -d '{"film_id": "<FILM_ID>"}'
+   ```
+   → Expect `201` and a JSON entry with `"public": false`.
+4. **View the watchlist:**
+   ```
+   curl http://127.0.0.1:5000/watchlist/<USER_ID>
+   ```
+   → Expect a JSON array containing the film.
+5. **Confirm the guards:**
+   - POST the same film again → the add is rejected (`AlreadyInWatchlistError`).
+   - POST `{"film_id": "00000000-0000-0000-0000-000000000000"}` → rejected
+     (`FilmNotFoundError`).
+6. **Run the automated tests:** `pytest tests/` → **7 passing**.
+
+### Known limitation / follow-up
+
+The `add_film` route doesn't yet translate `FilmNotFoundError` /
+`AlreadyInWatchlistError` into clean HTTP 4xx responses — they currently surface
+as a `500`. The service raises the right exceptions (and the unit tests assert
+them), so mapping them to `404`/`409` in the route is a small follow-up.
