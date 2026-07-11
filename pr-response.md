@@ -128,6 +128,7 @@ watchlist commits on top of main's history (which includes the
 `refactor: migrate film IDs from integer to UUID` commit).
 
 **What conflicted:**
+
 1. **`.gitignore`** — an add/add conflict: both main and my first commit
    independently added a `.gitignore`. The only real difference was that
    main's version listed `.pytest_cache/`.
@@ -138,6 +139,7 @@ watchlist commits on top of main's history (which includes the
    a UUID primary key — broken.
 
 **How I resolved it:**
+
 - `.gitignore`: took the **union** of both sides (kept `.pytest_cache/`,
   `.venv/`, and `venv/`) — no information lost.
 - `models.py`: kept the `WatchlistEntry` class but changed
@@ -150,6 +152,7 @@ watchlist commits on top of main's history (which includes the
   than `int`.
 
 **How I verified no conflict remains:**
+
 - `pytest tests/` → all 7 pass.
 - `grep` for `db.Integer` on `film_id` / `999999` / `film_id (int)` across
   `models.py`, `services/`, and `tests/` returns nothing.
@@ -237,3 +240,7 @@ The `add_film` route doesn't yet translate `FilmNotFoundError` /
 `AlreadyInWatchlistError` into clean HTTP 4xx responses — they currently surface
 as a `500`. The service raises the right exceptions (and the unit tests assert
 them), so mapping them to `404`/`409` in the route is a small follow-up.
+
+### Commit History
+
+![alt text](<Screenshot 2026-07-10 at 5.27.31 PM.jpg>)
